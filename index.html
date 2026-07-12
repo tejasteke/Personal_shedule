@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DayFlow — Elegant Daily Planner & Timeline</title>
+  <meta name="description" content="Organize your day with DayFlow, a sleek and highly interactive glassmorphic daily scheduler. Track your progress, manage tasks, and plan your time seamlessly.">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- CSS Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+  
+  <!-- jsPDF Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body class="dark-theme">
+  <!-- Dynamic Background Gradients -->
+  <div class="bg-glow bg-glow-1"></div>
+  <div class="bg-glow bg-glow-2"></div>
+
+  <div class="app-container">
+    <!-- Top Header -->
+    <header class="app-header glass-card">
+      <div class="header-logo">
+        <div class="logo-icon" style="background: transparent;">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <!-- Flame Background/Outer Glow -->
+            <path d="M12 2C12 2 8 8 8 11.5C8 13.985 10.015 16 12 16C13.985 16 16 13.985 16 11.5C16 8 12 2 12 2Z" fill="#FF9933" stroke="#FF9933" stroke-width="1"/>
+            <!-- Flame Inner Core -->
+            <path d="M12 6C12 6 10 9.5 10 11C10 12.104 10.896 13 12 13C13.104 13 14 12.104 14 11C14 9.5 12 6 12 6Z" fill="#FFD700" stroke="none"/>
+            <!-- Diya Base (Clay Lamp) -->
+            <path d="M2 15C2 15 5 21 12 21C19 21 22 15 22 15H2Z" fill="#A0522D" stroke="#8B4513" stroke-width="1.5"/>
+            <!-- Diya Decorative Pattern -->
+            <path d="M5 17C5 17 8 19 12 19C16 19 19 17 19 17" stroke="#DEB887" stroke-width="1.5" stroke-dasharray="2 2"/>
+          </svg>
+        </div>
+        <h1><span style="color: #FF9933;">Day</span><span style="color: #FFFFFF; text-shadow: 0 0 2px rgba(0,0,0,0.5);">Fl</span><span style="color: #138808;">ow</span></h1>
+      </div>
+      
+      <div class="date-navigator">
+        <button id="prev-day-btn" class="nav-arrow-btn" aria-label="Previous day">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+        
+        <div class="date-display-wrapper">
+          <span id="current-date-text">Sunday, June 28, 2026</span>
+          <input type="date" id="hidden-date-picker" style="display:none;">
+          <button id="calendar-trigger-btn" class="calendar-btn" aria-label="Choose Date">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          </button>
+        </div>
+        
+        <button id="next-day-btn" class="nav-arrow-btn" aria-label="Next day">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
+      </div>
+
+      <div class="header-actions">
+        <div class="quick-days-tabs">
+          <button class="day-tab" data-day="prev">Yesterday</button>
+          <button class="day-tab active" data-day="today">Today</button>
+          <button class="day-tab" data-day="next">Tomorrow</button>
+        </div>
+        
+        <button id="theme-toggle-btn" class="theme-toggle glass-btn" aria-label="Toggle Theme">
+          <svg class="sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+          <svg class="moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Workspace Grid -->
+    <main class="app-body">
+      <!-- Left Panel: Stats and Controls -->
+      <aside class="sidebar-panel">
+        <!-- Progress Card -->
+        <section class="sidebar-card glass-card stats-card">
+          <h2 class="section-title">Today's Progress</h2>
+          <div class="progress-container">
+            <div class="progress-ring-wrapper">
+              <svg class="progress-ring" width="120" height="120">
+                <circle class="progress-ring-bg" stroke="rgba(255,255,255,0.08)" stroke-width="8" fill="transparent" r="52" cx="60" cy="60"/>
+                <circle id="progress-bar-fill" class="progress-ring-bar" stroke="url(#progress-gradient)" stroke-width="8" stroke-dasharray="326.7" stroke-dashoffset="326.7" stroke-linecap="round" fill="transparent" r="52" cx="60" cy="60"/>
+                <defs>
+                  <linearGradient id="progress-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#8b5cf6" />
+                    <stop offset="100%" stop-color="#3b82f6" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              <div class="progress-percentage-label">
+                <span id="progress-percent">0%</span>
+              </div>
+            </div>
+            <div class="progress-text-info">
+              <p id="progress-counter-text">0 of 0 completed</p>
+              <span id="progress-motivation-text" class="motivation-quote">Ready to start your day?</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Categories Filter / Stats Card -->
+        <section class="sidebar-card glass-card category-card">
+          <div class="card-header-row">
+            <h2 class="section-title">Categories</h2>
+            <button id="clear-filters-btn" class="text-btn hide" type="button">Clear Filter</button>
+          </div>
+          <div class="category-list" id="category-filter-list">
+            <!-- Dynamically populated categories -->
+          </div>
+        </section>
+
+        <!-- Backup & Actions Card -->
+        <section class="sidebar-card glass-card utility-card">
+          <h2 class="section-title">Operations</h2>
+          <div class="utility-actions-grid">
+            <button id="export-btn" class="glass-btn action-btn-secondary" title="Export Schedule (PDF)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+              <span>Export</span>
+            </button>
+            <button id="clear-all-btn" class="glass-btn action-btn-danger" title="Clear all tasks for this day">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+              <span>Reset Day</span>
+            </button>
+          </div>
+        </section>
+      </aside>
+
+      <!-- Right Panel: Schedule Timeline or List View -->
+      <section class="main-schedule-panel glass-card">
+        <!-- Dashboard Toolbar -->
+        <div class="schedule-toolbar">
+          <div class="view-switch-tabs">
+            <button id="view-timeline-btn" class="view-tab active" data-view="timeline">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+              <span>Timeline View</span>
+            </button>
+            <button id="view-list-btn" class="view-tab" data-view="list">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+              <span>List View</span>
+            </button>
+            <button id="view-analytics-btn" class="view-tab" data-view="analytics">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+              <span>Analytics</span>
+            </button>
+          </div>
+
+          <div class="sorting-controls hide" id="list-sorting-controls">
+            <label for="list-sort-select">Sort by:</label>
+            <select id="list-sort-select" class="glass-select">
+              <option value="time">Time (Chronological)</option>
+              <option value="priority">Priority (High to Low)</option>
+              <option value="category">Category</option>
+              <option value="status">Status (Pending First)</option>
+            </select>
+          </div>
+
+          <button id="open-add-modal-btn" class="primary-gradient-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            <span>Add Task</span>
+          </button>
+        </div>
+
+        <!-- Timeline Container -->
+        <div id="timeline-view-container" class="view-container active">
+          <!-- Untimed/All-day Tasks Section -->
+          <div id="all-day-tasks-container" class="all-day-tasks-container hide">
+            <h4 class="all-day-title">📌 All-Day / Untimed Tasks</h4>
+            <div id="all-day-tasks-list" class="all-day-tasks-list"></div>
+          </div>
+          
+          <div class="timeline-ruler">
+            <!-- Timeline hours generated via JS -->
+          </div>
+        </div>
+
+        <!-- List View Container -->
+        <div id="list-view-container" class="view-container hide">
+          <div class="list-view-header">
+            <span class="list-stats-count" id="list-tasks-count">No tasks scheduled for today</span>
+          </div>
+          <div id="list-tasks-wrapper" class="list-tasks-wrapper">
+            <!-- List view tasks loaded via JS -->
+          </div>
+        </div>
+
+        <!-- Analytics Dashboard Container -->
+        <div id="analytics-view-container" class="view-container hide">
+          <div class="analytics-dashboard-header">
+            <div class="analytics-tabs">
+              <button class="analytics-scope-tab active" data-scope="day">Day Analysis</button>
+              <button class="analytics-scope-tab" data-scope="month">Month Analysis</button>
+              <button class="analytics-scope-tab" data-scope="year">Year Analysis</button>
+            </div>
+            
+            <div class="analytics-scope-selectors">
+              <select id="analytics-month-select" class="glass-select hide"></select>
+              <select id="analytics-year-select" class="glass-select hide"></select>
+            </div>
+          </div>
+
+          <div class="analytics-panels-wrapper">
+            <!-- Day Sub-View -->
+            <div id="analytics-day-panel" class="analytics-scope-panel">
+              <!-- Rendered via JS -->
+            </div>
+            
+            <!-- Month Sub-View -->
+            <div id="analytics-month-panel" class="analytics-scope-panel hide">
+              <!-- Rendered via JS -->
+            </div>
+
+            <!-- Year Sub-View -->
+            <div id="analytics-year-panel" class="analytics-scope-panel hide">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Task Form Modal -->
+  <div id="task-modal" class="modal-overlay">
+    <div class="modal-content glass-card animate-slide-in">
+      <div class="modal-header">
+        <h3 id="modal-title">Create Schedule Task</h3>
+        <button id="close-modal-btn" class="close-btn" aria-label="Close modal">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      
+      <form id="task-form" class="modal-form">
+        <input type="hidden" id="task-id-field">
+        
+        <div class="form-group">
+          <label for="task-title" class="form-label">Task Title</label>
+          <input type="text" id="task-title" class="form-input" placeholder="e.g., Team Sync Meeting" required maxlength="60">
+        </div>
+        
+        <div class="form-group" style="flex-direction: row; align-items: center; gap: 8px; margin-bottom: 4px;">
+          <input type="checkbox" id="task-all-day" style="width: 16px; height: 16px; cursor: pointer;">
+          <label for="task-all-day" class="form-label" style="cursor: pointer; margin-bottom: 0; user-select: none;">All-day / Untimed Task</label>
+        </div>
+        
+        <div class="form-row-grid" id="time-inputs-row">
+          <div class="form-group">
+            <label for="task-start-time" class="form-label">Start Time</label>
+            <input type="time" id="task-start-time" class="form-input">
+          </div>
+          <div class="form-group">
+            <label for="task-end-time" class="form-label">End Time</label>
+            <input type="time" id="task-end-time" class="form-input">
+          </div>
+        </div>
+        
+        <div class="form-row-grid">
+          <div class="form-group">
+            <label for="task-category" class="form-label">Category</label>
+            <select id="task-category" class="form-select" required>
+              <option value="Work">💼 Work</option>
+              <option value="Personal">🏠 Personal</option>
+              <option value="Health">🍏 Health & Wellness</option>
+              <option value="Study">📚 Learning & Study</option>
+              <option value="Leisure">🎮 Leisure & Social</option>
+              <option value="Routine">🔄 Daily Routine</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Priority</label>
+            <div class="priority-selector">
+              <input type="radio" name="priority" id="prio-low" value="Low">
+              <label for="prio-low" class="prio-btn prio-low">Low</label>
+              
+              <input type="radio" name="priority" id="prio-med" value="Medium" checked>
+              <label for="prio-med" class="prio-btn prio-medium">Medium</label>
+              
+              <input type="radio" name="priority" id="prio-high" value="High">
+              <label for="prio-high" class="prio-btn prio-high">High</label>
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="task-notes" class="form-label">Notes & Description (Optional)</label>
+          <textarea id="task-notes" class="form-textarea" placeholder="Add details, links, or sub-tasks..." rows="3"></textarea>
+        </div>
+
+        <div id="modal-conflict-warning" class="conflict-warning-box hide">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+          <span id="conflict-warning-message">This task overlaps with an existing task.</span>
+        </div>
+        
+        <div class="modal-footer">
+          <button type="button" id="delete-task-btn" class="glass-btn action-btn-danger hide">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            <span>Delete</span>
+          </button>
+          <div class="footer-right-buttons">
+            <button type="button" id="cancel-task-btn" class="glass-btn">Cancel</button>
+            <button type="submit" id="save-task-btn" class="primary-gradient-btn">Save Task</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Custom Alert/Toast Notification System -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- App Script -->
+  <script src="db.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

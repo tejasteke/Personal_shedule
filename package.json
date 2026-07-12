@@ -1,0 +1,22 @@
+{
+  "name": "dayflow-scheduler",
+  "version": "1.0.0",
+  "description": "Elegant daily planner & timeline scheduler with glassmorphism style.",
+  "main": "index.html",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js"
+  },
+  "keywords": [
+    "scheduler",
+    "planner",
+    "timeline",
+    "glassmorphism"
+  ],
+  "author": "Antigravity",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^5.2.1",
+    "sqlite3": "^5.1.7"
+  }
+}
