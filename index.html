@@ -147,6 +147,14 @@
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
               <span>Analytics</span>
             </button>
+            <button id="view-goals-btn" class="view-tab" data-view="goals">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+              <span>Goals & Dares</span>
+            </button>
+            <button id="view-goals-analytics-btn" class="view-tab" data-view="goals-analytics">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
+              <span>Goals Analytics</span>
+            </button>
           </div>
 
           <div class="sorting-controls hide" id="list-sorting-controls">
@@ -217,6 +225,150 @@
             <!-- Year Sub-View -->
             <div id="analytics-year-panel" class="analytics-scope-panel hide">
               <!-- Rendered via JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Goals & Dares Container -->
+        <div id="goals-view-container" class="view-container hide">
+          <div class="goals-dashboard-header">
+            <h2 class="section-title">Aspirations & Challenges</h2>
+          </div>
+          <div class="goals-grid-layout">
+            <!-- Weekly Goals -->
+            <div class="goal-section glass-card">
+              <div class="goal-section-header">
+                <h3>Weekly Goals</h3>
+              </div>
+              <div class="goal-list" id="weekly-goals-list"></div>
+              <form class="goal-add-form" id="form-add-weekly">
+                <input type="text" placeholder="Add a weekly goal..." required>
+                <button type="submit" class="glass-btn">Add</button>
+              </form>
+            </div>
+
+            <!-- Monthly Goals -->
+            <div class="goal-section glass-card">
+              <div class="goal-section-header">
+                <h3>Monthly Goals</h3>
+              </div>
+              <div class="goal-list" id="monthly-goals-list"></div>
+              <form class="goal-add-form" id="form-add-monthly">
+                <input type="text" placeholder="Add a monthly goal..." required>
+                <button type="submit" class="glass-btn">Add</button>
+              </form>
+            </div>
+
+            <!-- Long Term Goals -->
+            <div class="goal-section glass-card">
+              <div class="goal-section-header">
+                <h3>Long Term Goals</h3>
+              </div>
+              <div class="goal-list" id="long-term-goals-list"></div>
+              <form class="goal-add-form" id="form-add-long-term">
+                <input type="text" placeholder="Add a long-term goal..." required>
+                <button type="submit" class="glass-btn">Add</button>
+              </form>
+            </div>
+
+            <!-- Dares -->
+            <div class="goal-section dare-section glass-card">
+              <div class="goal-section-header dare-header">
+                <h3>🔥 Dare of the Day</h3>
+              </div>
+              <div class="goal-list" id="dares-list"></div>
+              <form class="goal-add-form" id="form-add-dare">
+                <input type="text" placeholder="I dare you to..." required>
+                <button type="submit" class="glass-btn primary-gradient-btn">Dare</button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Goals Analytics Container -->
+        <div id="goals-analytics-view-container" class="view-container hide">
+          <div class="goals-dashboard-header">
+            <h2 class="section-title">Goals Analytics</h2>
+          </div>
+          
+          <div class="analytics-grid-3col" style="margin-bottom: 24px;">
+            <div class="glass-card analytics-card completed-accent">
+              <span class="analytics-metric-value" id="ga-overall-rate">0%</span>
+              <span class="analytics-metric-label">Overall Completion</span>
+            </div>
+            <div class="glass-card analytics-card">
+              <span class="analytics-metric-value" id="ga-overall-completed">0 / 0</span>
+              <span class="analytics-metric-label">Total Goals Completed</span>
+            </div>
+            <div class="glass-card analytics-card">
+              <span class="analytics-metric-value" id="ga-total-dares">0</span>
+              <span class="analytics-metric-label">Dares Conquered</span>
+            </div>
+          </div>
+
+          <div class="goals-grid-layout">
+            <!-- Weekly Stats -->
+            <div class="goal-section glass-card">
+              <div class="goal-section-header">
+                <h3>Weekly Goals Progress</h3>
+              </div>
+              <div class="ga-stat-container">
+                <div class="ga-stat-header">
+                  <span class="ga-stat-text" id="ga-weekly-text">0 / 0 completed</span>
+                  <span class="ga-stat-percent" id="ga-weekly-percent">0%</span>
+                </div>
+                <div class="ga-progress-bar-bg">
+                  <div class="ga-progress-bar-fill" id="ga-weekly-bar" style="width: 0%; background: var(--cat-work);"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Monthly Stats -->
+            <div class="goal-section glass-card">
+              <div class="goal-section-header">
+                <h3>Monthly Goals Progress</h3>
+              </div>
+              <div class="ga-stat-container">
+                <div class="ga-stat-header">
+                  <span class="ga-stat-text" id="ga-monthly-text">0 / 0 completed</span>
+                  <span class="ga-stat-percent" id="ga-monthly-percent">0%</span>
+                </div>
+                <div class="ga-progress-bar-bg">
+                  <div class="ga-progress-bar-fill" id="ga-monthly-bar" style="width: 0%; background: var(--cat-health);"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Long Term Stats -->
+            <div class="goal-section glass-card">
+              <div class="goal-section-header">
+                <h3>Long Term Goals Progress</h3>
+              </div>
+              <div class="ga-stat-container">
+                <div class="ga-stat-header">
+                  <span class="ga-stat-text" id="ga-long-term-text">0 / 0 completed</span>
+                  <span class="ga-stat-percent" id="ga-long-term-percent">0%</span>
+                </div>
+                <div class="ga-progress-bar-bg">
+                  <div class="ga-progress-bar-fill" id="ga-long-term-bar" style="width: 0%; background: var(--cat-study);"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Dares Stats -->
+            <div class="goal-section dare-section glass-card">
+              <div class="goal-section-header dare-header">
+                <h3>🔥 Dares Conquered</h3>
+              </div>
+              <div class="ga-stat-container">
+                <div class="ga-stat-header">
+                  <span class="ga-stat-text" id="ga-dares-text">0 / 0 completed</span>
+                  <span class="ga-stat-percent" id="ga-dares-percent" style="color: #ff4d6d;">0%</span>
+                </div>
+                <div class="ga-progress-bar-bg">
+                  <div class="ga-progress-bar-fill" id="ga-dares-bar" style="width: 0%; background: #ff4d6d;"></div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

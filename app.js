@@ -8,9 +8,13 @@
 // ==========================================
 let state = {
   tasks: [], // Array of task objects
+  weeklyGoals: [],
+  monthlyGoals: [],
+  longTermGoals: [],
+  dares: [],
   selectedDate: '', // YYYY-MM-DD format
   filterCategory: 'All', // 'All' or specific category name
-  activeView: 'timeline', // 'timeline' or 'list'
+  activeView: 'timeline', // 'timeline', 'list', 'analytics', 'goals'
   activeSort: 'time', // 'time', 'priority', 'category', 'status'
   theme: 'dark-theme', // 'dark-theme' or 'light-theme'
   analyticsScope: 'day', // 'day', 'month', 'year'
@@ -113,21 +117,26 @@ function applyLoadedSettings(parsed) {
   const viewTimelineBtn = document.getElementById('view-timeline-btn');
   const viewListBtn = document.getElementById('view-list-btn');
   const viewAnalyticsBtn = document.getElementById('view-analytics-btn');
+  const viewGoalsBtn = document.getElementById('view-goals-btn');
   const timelineContainer = document.getElementById('timeline-view-container');
   const listContainer = document.getElementById('list-view-container');
   const analyticsContainer = document.getElementById('analytics-view-container');
+  const goalsContainer = document.getElementById('goals-view-container');
   const listSortControls = document.getElementById('list-sorting-controls');
 
-  if (viewTimelineBtn && viewListBtn && viewAnalyticsBtn && timelineContainer && listContainer && analyticsContainer && listSortControls) {
+  if (viewTimelineBtn && viewListBtn && viewAnalyticsBtn && viewGoalsBtn && timelineContainer && listContainer && analyticsContainer && goalsContainer && listSortControls) {
     viewTimelineBtn.classList.remove('active');
     viewListBtn.classList.remove('active');
     viewAnalyticsBtn.classList.remove('active');
+    viewGoalsBtn.classList.remove('active');
     timelineContainer.classList.add('hide');
     timelineContainer.classList.remove('active');
     listContainer.classList.add('hide');
     listContainer.classList.remove('active');
     analyticsContainer.classList.add('hide');
     analyticsContainer.classList.remove('active');
+    goalsContainer.classList.add('hide');
+    goalsContainer.classList.remove('active');
     listSortControls.classList.add('hide');
 
     if (state.activeView === 'timeline') {
@@ -143,6 +152,10 @@ function applyLoadedSettings(parsed) {
       viewAnalyticsBtn.classList.add('active');
       analyticsContainer.classList.remove('hide');
       analyticsContainer.classList.add('active');
+    } else if (state.activeView === 'goals') {
+      viewGoalsBtn.classList.add('active');
+      goalsContainer.classList.remove('hide');
+      goalsContainer.classList.add('active');
     }
   }
 
@@ -171,6 +184,29 @@ function loadFallbackTasks() {
       state.tasks = [];
     }
   }
+
+  const loadedGoals = localStorage.getItem('dayflow_goals');
+  if (loadedGoals) {
+    try {
+      const goalsData = JSON.parse(loadedGoals);
+      state.weeklyGoals = goalsData.weekly || [];
+      state.monthlyGoals = goalsData.monthly || [];
+      state.longTermGoals = goalsData.longTerm || [];
+      state.dares = goalsData.dares || [];
+    } catch (e) {
+      // Use defaults defined in state
+    }
+  }
+}
+
+function saveGoalsToLocal() {
+  const goalsData = {
+    weekly: state.weeklyGoals,
+    monthly: state.monthlyGoals,
+    longTerm: state.longTermGoals,
+    dares: state.dares
+  };
+  localStorage.setItem('dayflow_goals', JSON.stringify(goalsData));
 }
 
 function injectMockTasks() {
@@ -332,6 +368,10 @@ function renderUI() {
     renderList();
   } else if (state.activeView === 'analytics') {
     renderAnalytics();
+  } else if (state.activeView === 'goals') {
+    renderGoalsAndDares();
+  } else if (state.activeView === 'goals-analytics') {
+    renderGoalsAnalytics();
   }
 }
 
@@ -1151,13 +1191,16 @@ function initEventListeners() {
     renderUI();
   });
 
-  // View Switch Tabs
   const viewTimelineBtn = document.getElementById('view-timeline-btn');
   const viewListBtn = document.getElementById('view-list-btn');
   const viewAnalyticsBtn = document.getElementById('view-analytics-btn');
+  const viewGoalsBtn = document.getElementById('view-goals-btn');
+  const viewGoalsAnalyticsBtn = document.getElementById('view-goals-analytics-btn');
   const timelineContainer = document.getElementById('timeline-view-container');
   const listContainer = document.getElementById('list-view-container');
   const analyticsContainer = document.getElementById('analytics-view-container');
+  const goalsContainer = document.getElementById('goals-view-container');
+  const goalsAnalyticsContainer = document.getElementById('goals-analytics-view-container');
   const listSortControls = document.getElementById('list-sorting-controls');
 
   const setView = (viewName) => {
@@ -1167,6 +1210,8 @@ function initEventListeners() {
     viewTimelineBtn.classList.remove('active');
     viewListBtn.classList.remove('active');
     viewAnalyticsBtn.classList.remove('active');
+    viewGoalsBtn.classList.remove('active');
+    if (viewGoalsAnalyticsBtn) viewGoalsAnalyticsBtn.classList.remove('active');
     
     timelineContainer.classList.add('hide');
     timelineContainer.classList.remove('active');
@@ -1174,6 +1219,12 @@ function initEventListeners() {
     listContainer.classList.remove('active');
     analyticsContainer.classList.add('hide');
     analyticsContainer.classList.remove('active');
+    goalsContainer.classList.add('hide');
+    goalsContainer.classList.remove('active');
+    if (goalsAnalyticsContainer) {
+      goalsAnalyticsContainer.classList.add('hide');
+      goalsAnalyticsContainer.classList.remove('active');
+    }
     
     listSortControls.classList.add('hide');
 
@@ -1190,6 +1241,16 @@ function initEventListeners() {
       viewAnalyticsBtn.classList.add('active');
       analyticsContainer.classList.add('active');
       analyticsContainer.classList.remove('hide');
+    } else if (viewName === 'goals') {
+      viewGoalsBtn.classList.add('active');
+      goalsContainer.classList.add('active');
+      goalsContainer.classList.remove('hide');
+    } else if (viewName === 'goals-analytics') {
+      if (viewGoalsAnalyticsBtn) viewGoalsAnalyticsBtn.classList.add('active');
+      if (goalsAnalyticsContainer) {
+        goalsAnalyticsContainer.classList.add('active');
+        goalsAnalyticsContainer.classList.remove('hide');
+      }
     }
     renderUI();
   };
@@ -1197,6 +1258,8 @@ function initEventListeners() {
   viewTimelineBtn.addEventListener('click', () => setView('timeline'));
   viewListBtn.addEventListener('click', () => setView('list'));
   viewAnalyticsBtn.addEventListener('click', () => setView('analytics'));
+  viewGoalsBtn.addEventListener('click', () => setView('goals'));
+  if (viewGoalsAnalyticsBtn) viewGoalsAnalyticsBtn.addEventListener('click', () => setView('goals-analytics'));
 
   // Scope Tabs for Analytics (Day/Month/Year)
   document.querySelectorAll('.analytics-scope-tab').forEach(tab => {
@@ -1303,6 +1366,29 @@ function initEventListeners() {
       clearDayTasks();
     }
   });
+
+  // Goal Form Submits
+  const bindGoalForm = (formId, stateKey) => {
+    const form = document.getElementById(formId);
+    if (!form) return;
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const input = form.querySelector('input');
+      const text = input.value.trim();
+      if (text) {
+        state[stateKey].push({ id: generateId(), text, completed: false });
+        saveGoalsToLocal();
+        input.value = '';
+        renderGoalsAndDares();
+        showToast('Added successfully!', 'success');
+      }
+    });
+  };
+
+  bindGoalForm('form-add-weekly', 'weeklyGoals');
+  bindGoalForm('form-add-monthly', 'monthlyGoals');
+  bindGoalForm('form-add-long-term', 'longTermGoals');
+  bindGoalForm('form-add-dare', 'dares');
 }
 
 // ==========================================
@@ -1876,7 +1962,108 @@ function renderYearAnalytics() {
 }
 
 // ==========================================
-// 12. App Bootstrap
+// 12. Goals & Dares Renderer
+// ==========================================
+function renderGoalsAndDares() {
+  const weeklyList = document.getElementById('weekly-goals-list');
+  const monthlyList = document.getElementById('monthly-goals-list');
+  const longTermList = document.getElementById('long-term-goals-list');
+  const daresList = document.getElementById('dares-list');
+
+  if (!weeklyList || !monthlyList || !longTermList || !daresList) return;
+
+  const createGoalHTML = (item, stateKey) => {
+    const card = document.createElement('div');
+    card.className = `goal-item ${item.completed ? 'completed' : ''}`;
+    card.innerHTML = `
+      <input type="checkbox" class="goal-checkbox" ${item.completed ? 'checked' : ''}>
+      <span class="goal-text">${escapeHTML(item.text)}</span>
+      <button class="goal-delete-btn" aria-label="Delete">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    `;
+
+    // Checkbox toggle
+    const checkbox = card.querySelector('.goal-checkbox');
+    checkbox.addEventListener('change', (e) => {
+      item.completed = e.target.checked;
+      saveGoalsToLocal();
+      renderGoalsAndDares();
+    });
+
+    // Delete button
+    const deleteBtn = card.querySelector('.goal-delete-btn');
+    deleteBtn.addEventListener('click', () => {
+      state[stateKey] = state[stateKey].filter(g => g.id !== item.id);
+      saveGoalsToLocal();
+      renderGoalsAndDares();
+    });
+
+    return card;
+  };
+
+  weeklyList.innerHTML = '';
+  state.weeklyGoals.forEach(g => weeklyList.appendChild(createGoalHTML(g, 'weeklyGoals')));
+  if (state.weeklyGoals.length === 0) weeklyList.innerHTML = '<span style="color:var(--text-muted);font-size:13px;padding:8px;">No weekly goals set.</span>';
+
+  monthlyList.innerHTML = '';
+  state.monthlyGoals.forEach(g => monthlyList.appendChild(createGoalHTML(g, 'monthlyGoals')));
+  if (state.monthlyGoals.length === 0) monthlyList.innerHTML = '<span style="color:var(--text-muted);font-size:13px;padding:8px;">No monthly goals set.</span>';
+
+  longTermList.innerHTML = '';
+  state.longTermGoals.forEach(g => longTermList.appendChild(createGoalHTML(g, 'longTermGoals')));
+  if (state.longTermGoals.length === 0) longTermList.innerHTML = '<span style="color:var(--text-muted);font-size:13px;padding:8px;">No long-term goals set.</span>';
+
+  daresList.innerHTML = '';
+  state.dares.forEach(d => daresList.appendChild(createGoalHTML(d, 'dares')));
+  if (state.dares.length === 0) daresList.innerHTML = '<span style="color:var(--text-muted);font-size:13px;padding:8px;">No dares right now. Add one!</span>';
+}
+
+// ==========================================
+// 13. Goals Analytics Renderer
+// ==========================================
+function renderGoalsAnalytics() {
+  const container = document.getElementById('goals-analytics-view-container');
+  if (!container || !container.classList.contains('active')) return;
+
+  const updateStat = (listKey, textId, percentId, barId) => {
+    const list = state[listKey] || [];
+    const total = list.length;
+    const completed = list.filter(g => g.completed).length;
+    const rate = total === 0 ? 0 : Math.round((completed / total) * 100);
+    
+    const textEl = document.getElementById(textId);
+    const percentEl = document.getElementById(percentId);
+    const barEl = document.getElementById(barId);
+    
+    if (textEl) textEl.textContent = `${completed} / ${total} completed`;
+    if (percentEl) percentEl.textContent = `${rate}%`;
+    if (barEl) barEl.style.width = `${rate}%`;
+
+    return { total, completed };
+  };
+
+  const weeklyStats = updateStat('weeklyGoals', 'ga-weekly-text', 'ga-weekly-percent', 'ga-weekly-bar');
+  const monthlyStats = updateStat('monthlyGoals', 'ga-monthly-text', 'ga-monthly-percent', 'ga-monthly-bar');
+  const longTermStats = updateStat('longTermGoals', 'ga-long-term-text', 'ga-long-term-percent', 'ga-long-term-bar');
+  const daresStats = updateStat('dares', 'ga-dares-text', 'ga-dares-percent', 'ga-dares-bar');
+
+  // Overall calculations (excluding dares for the main goal calculation)
+  const totalGoals = weeklyStats.total + monthlyStats.total + longTermStats.total;
+  const completedGoals = weeklyStats.completed + monthlyStats.completed + longTermStats.completed;
+  const overallRate = totalGoals === 0 ? 0 : Math.round((completedGoals / totalGoals) * 100);
+
+  const overallRateEl = document.getElementById('ga-overall-rate');
+  const overallCompletedEl = document.getElementById('ga-overall-completed');
+  const totalDaresEl = document.getElementById('ga-total-dares');
+
+  if (overallRateEl) overallRateEl.textContent = `${overallRate}%`;
+  if (overallCompletedEl) overallCompletedEl.textContent = `${completedGoals} / ${totalGoals}`;
+  if (totalDaresEl) totalDaresEl.textContent = `${daresStats.completed}`;
+}
+
+// ==========================================
+// 14. App Bootstrap
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
   // Load UI configuration settings
