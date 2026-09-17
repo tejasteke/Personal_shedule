@@ -51,6 +51,36 @@ function initializeDatabaseSchema() {
     )`, (err) => {
       if (err) console.error('Failed to create settings table:', err.message);
     });
+
+    // Jobs table schema
+    db.run(`CREATE TABLE IF NOT EXISTS jobs (
+      id TEXT PRIMARY KEY,
+      jobTitle TEXT NOT NULL,
+      dateApplied TEXT NOT NULL,
+      skillsNeeded TEXT,
+      skillsIHave TEXT,
+      description TEXT,
+      isImportant INTEGER DEFAULT 0,
+      importantNotes TEXT
+    )`, (err) => {
+      if (err) {
+        console.error('Failed to create jobs table:', err.message);
+      } else {
+        // Attempt to add new columns if table already existed without them
+        db.run(`ALTER TABLE jobs ADD COLUMN isImportant INTEGER DEFAULT 0`, () => {});
+        db.run(`ALTER TABLE jobs ADD COLUMN importantNotes TEXT`, () => {});
+      }
+    });
+
+    // Cold Mails table schema
+    db.run(`CREATE TABLE IF NOT EXISTS cold_mails (
+      id TEXT PRIMARY KEY,
+      companyName TEXT NOT NULL,
+      email TEXT NOT NULL,
+      description TEXT
+    )`, (err) => {
+      if (err) console.error('Failed to create cold_mails table:', err.message);
+    });
   });
 }
 
@@ -209,6 +239,100 @@ app.get('/api/settings', (req, res) => {
     } catch (e) {
       res.status(500).json({ error: 'Failed to parse user preferences' });
     }
+  });
+});
+
+// ==========================================
+// 3. Jobs API Routes
+// ==========================================
+
+// GET: Fetch all jobs
+app.get('/api/jobs', (req, res) => {
+  db.all('SELECT * FROM jobs', [], (err, rows) => {
+    if (err) {
+      console.error('Error fetching jobs:', err.message);
+      return res.status(500).json({ error: err.message });
+    }
+    res.json(rows);
+  });
+});
+
+// POST: Add a new job
+app.post('/api/jobs', (req, res) => {
+  const { id, jobTitle, dateApplied, skillsNeeded, skillsIHave, description, isImportant, importantNotes } = req.body;
+  const sql = `INSERT INTO jobs (id, jobTitle, dateApplied, skillsNeeded, skillsIHave, description, isImportant, importantNotes) 
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+  
+  db.run(sql, [id, jobTitle, dateApplied, skillsNeeded, skillsIHave, description, isImportant ? 1 : 0, importantNotes], function(err) {
+    if (err) {
+      console.error('Error adding job:', err.message);
+      return res.status(500).json({ error: err.message });
+    }
+    res.status(201).json({ id, message: 'Job added successfully' });
+  });
+});
+
+// DELETE: Delete a job
+app.delete('/api/jobs/:id', (req, res) => {
+  const { id } = req.params;
+  const sql = `DELETE FROM jobs WHERE id = ?`;
+  
+  db.run(sql, [id], function(err) {
+    if (err) {
+      console.error('Error deleting job:', err.message);
+      return res.status(500).json({ error: err.message });
+    }
+    if (this.changes === 0) {
+      return res.status(404).json({ error: 'Job not found' });
+    }
+    res.json({ message: 'Job deleted successfully' });
+  });
+});
+
+// ==========================================
+// 4. Cold Mails API Routes
+// ==========================================
+
+// GET: Fetch all cold mails
+app.get('/api/cold_mails', (req, res) => {
+  db.all('SELECT * FROM cold_mails', [], (err, rows) => {
+    if (err) {
+      console.error('Error fetching cold mails:', err.message);
+      return res.status(500).json({ error: err.message });
+    }
+    res.json(rows);
+  });
+});
+
+// POST: Add a new cold mail
+app.post('/api/cold_mails', (req, res) => {
+  const { id, companyName, email, description } = req.body;
+  const sql = `INSERT INTO cold_mails (id, companyName, email, description) 
+               VALUES (?, ?, ?, ?)`;
+  
+  db.run(sql, [id, companyName, email, description], function(err) {
+    if (err) {
+      console.error('Error adding cold mail:', err.message);
+      return res.status(500).json({ error: err.message });
+    }
+    res.status(201).json({ id, message: 'Cold mail added successfully' });
+  });
+});
+
+// DELETE: Delete a cold mail
+app.delete('/api/cold_mails/:id', (req, res) => {
+  const { id } = req.params;
+  const sql = `DELETE FROM cold_mails WHERE id = ?`;
+  
+  db.run(sql, [id], function(err) {
+    if (err) {
+      console.error('Error deleting cold mail:', err.message);
+      return res.status(500).json({ error: err.message });
+    }
+    if (this.changes === 0) {
+      return res.status(404).json({ error: 'Cold mail not found' });
+    }
+    res.json({ message: 'Cold mail deleted successfully' });
   });
 });
 

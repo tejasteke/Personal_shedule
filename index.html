@@ -14,6 +14,8 @@
   <!-- CSS Stylesheet -->
   <link rel="stylesheet" href="style.css">
   
+  <!-- Chart.js Library for Jobs Analytics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- jsPDF Library -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
@@ -154,6 +156,10 @@
             <button id="view-goals-analytics-btn" class="view-tab" data-view="goals-analytics">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
               <span>Goals Analytics</span>
+            </button>
+            <button id="view-jobs-btn" class="view-tab" data-view="jobs">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
+              <span>Jobs Applied</span>
             </button>
           </div>
 
@@ -368,6 +374,88 @@
                 <div class="ga-progress-bar-bg">
                   <div class="ga-progress-bar-fill" id="ga-dares-bar" style="width: 0%; background: #ff4d6d;"></div>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Jobs Applied Container -->
+        <div id="jobs-view-container" class="view-container hide">
+          <div class="goals-dashboard-header">
+            <h2 class="section-title">Jobs Applied Tracker</h2>
+          </div>
+          
+          <div class="analytics-grid-3col" style="margin-bottom: 24px;">
+            <div class="glass-card analytics-card">
+              <span class="analytics-metric-value" id="jobs-total-count">0</span>
+              <span class="analytics-metric-label">Total Jobs Applied</span>
+            </div>
+            <div class="glass-card analytics-card">
+              <span class="analytics-metric-value" id="jobs-this-week-count">0</span>
+              <span class="analytics-metric-label">Applied This Week</span>
+            </div>
+            <div class="glass-card analytics-card">
+              <span class="analytics-metric-value" id="jobs-this-month-count">0</span>
+              <span class="analytics-metric-label">Applied This Month</span>
+            </div>
+          </div>
+
+          <div class="jobs-grid-layout" style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+            <div class="goal-section glass-card">
+              <div class="goal-section-header">
+                <h3>Add New Job Application</h3>
+              </div>
+              <form class="job-add-form" id="form-add-job" style="display: flex; flex-direction: column; gap: 12px; margin-top: 16px;">
+                <input type="text" id="job-title" placeholder="Job Title / Company" required class="form-input">
+                <input type="date" id="job-date" required class="form-input" style="color: white; background: rgba(0,0,0,0.2);">
+                <input type="text" id="job-skills-needed" placeholder="Skills Needed (comma separated)" required class="form-input">
+                <input type="text" id="job-skills-have" placeholder="Skills I Have (comma separated)" required class="form-input">
+                <textarea id="job-description" placeholder="Description / Notes" class="form-textarea" rows="3"></textarea>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <input type="checkbox" id="job-is-important" style="width: 16px; height: 16px; cursor: pointer;">
+                  <label for="job-is-important" style="cursor: pointer; font-size: 13px;">Set Reminder / Mark Important</label>
+                </div>
+                <textarea id="job-important-notes" placeholder="Important details / Reminder notes" class="form-textarea hide" rows="2" style="border-color: var(--primary-light);"></textarea>
+                <button type="submit" class="glass-btn primary-gradient-btn">Add Job</button>
+              </form>
+            </div>
+
+            <div class="goal-section glass-card">
+              <div class="goal-section-header">
+                <h3>Skills Analysis Chart</h3>
+              </div>
+              <div class="chart-container" style="position: relative; height: 300px; width: 100%; margin-top: 16px;">
+                <canvas id="skillsChart"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div class="jobs-grid-layout" style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+            <div class="goal-section glass-card">
+              <div class="goal-section-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <h3>Recent Job Applications</h3>
+                <div style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--primary-light);">
+                  <input type="checkbox" id="job-reminder-filter" style="cursor: pointer;">
+                  <label for="job-reminder-filter" style="cursor: pointer;">Important / Reminders Only</label>
+                </div>
+              </div>
+              <div id="jobs-list" style="margin-top: 16px; display: flex; flex-direction: column; gap: 12px; max-height: 400px; overflow-y: auto;">
+                <!-- Jobs will be populated here -->
+              </div>
+            </div>
+
+            <div class="goal-section glass-card">
+              <div class="goal-section-header">
+                <h3>Cold Mail Targets</h3>
+              </div>
+              <form class="cold-mail-add-form" id="form-add-cold-mail" style="display: flex; flex-direction: column; gap: 12px; margin-top: 16px;">
+                <input type="text" id="cm-company" placeholder="Company Name" required class="form-input">
+                <input type="email" id="cm-email" placeholder="Contact Email" required class="form-input">
+                <textarea id="cm-description" placeholder="Description / Message ideas" class="form-textarea" rows="2"></textarea>
+                <button type="submit" class="glass-btn primary-gradient-btn">Add Target</button>
+              </form>
+              <div id="cold-mails-list" style="margin-top: 16px; display: flex; flex-direction: column; gap: 12px; max-height: 230px; overflow-y: auto;">
+                <!-- Cold mails will be populated here -->
               </div>
             </div>
           </div>

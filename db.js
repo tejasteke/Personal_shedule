@@ -217,6 +217,98 @@ class DatabaseManager {
     const local = localStorage.getItem('dayflow_settings');
     return local ? JSON.parse(local) : {};
   }
+  // ==========================================
+  // Jobs sync APIs
+  // ==========================================
+  
+  async getJobs() {
+    if (this.dbAvailable) {
+      try {
+        const response = await fetch(`${this.apiBase}/jobs`);
+        if (response.ok) {
+          return await response.json();
+        }
+      } catch (e) {
+        console.warn('Error fetching jobs:', e);
+      }
+    }
+    const local = localStorage.getItem('dayflow_jobs');
+    return local ? JSON.parse(local) : [];
+  }
+
+  async addJob(job) {
+    if (this.dbAvailable) {
+      try {
+        const response = await fetch(`${this.apiBase}/jobs`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(job)
+        });
+        if (response.ok) return;
+      } catch (e) {
+        console.warn('Error adding job:', e);
+      }
+    }
+  }
+
+  async deleteJob(id) {
+    if (this.dbAvailable) {
+      try {
+        const response = await fetch(`${this.apiBase}/jobs/${id}`, {
+          method: 'DELETE'
+        });
+        if (response.ok) return;
+      } catch (e) {
+        console.warn('Error deleting job:', e);
+      }
+    }
+  }
+  // ==========================================
+  // Cold Mails sync APIs
+  // ==========================================
+  
+  async getColdMails() {
+    if (this.dbAvailable) {
+      try {
+        const response = await fetch(`${this.apiBase}/cold_mails`);
+        if (response.ok) {
+          return await response.json();
+        }
+      } catch (e) {
+        console.warn('Error fetching cold mails:', e);
+      }
+    }
+    const local = localStorage.getItem('dayflow_cold_mails');
+    return local ? JSON.parse(local) : [];
+  }
+
+  async addColdMail(coldMail) {
+    if (this.dbAvailable) {
+      try {
+        const response = await fetch(`${this.apiBase}/cold_mails`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(coldMail)
+        });
+        if (response.ok) return;
+      } catch (e) {
+        console.warn('Error adding cold mail:', e);
+      }
+    }
+  }
+
+  async deleteColdMail(id) {
+    if (this.dbAvailable) {
+      try {
+        const response = await fetch(`${this.apiBase}/cold_mails/${id}`, {
+          method: 'DELETE'
+        });
+        if (response.ok) return;
+      } catch (e) {
+        console.warn('Error deleting cold mail:', e);
+      }
+    }
+  }
 }
 
 // Instantiate globally

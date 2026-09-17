@@ -12,6 +12,8 @@ let state = {
   monthlyGoals: [],
   longTermGoals: [],
   dares: [],
+  jobs: [], // Array of job applications
+  coldMails: [], // Array of cold mail targets
   selectedDate: '', // YYYY-MM-DD format
   filterCategory: 'All', // 'All' or specific category name
   activeView: 'timeline', // 'timeline', 'list', 'analytics', 'goals'
@@ -118,17 +120,26 @@ function applyLoadedSettings(parsed) {
   const viewListBtn = document.getElementById('view-list-btn');
   const viewAnalyticsBtn = document.getElementById('view-analytics-btn');
   const viewGoalsBtn = document.getElementById('view-goals-btn');
+  const viewGoalsAnalyticsBtn = document.getElementById('view-goals-analytics-btn');
+  const viewJobsBtn = document.getElementById('view-jobs-btn');
+  
   const timelineContainer = document.getElementById('timeline-view-container');
   const listContainer = document.getElementById('list-view-container');
   const analyticsContainer = document.getElementById('analytics-view-container');
   const goalsContainer = document.getElementById('goals-view-container');
+  const goalsAnalyticsContainer = document.getElementById('goals-analytics-view-container');
+  const jobsContainer = document.getElementById('jobs-view-container');
+  
   const listSortControls = document.getElementById('list-sorting-controls');
 
-  if (viewTimelineBtn && viewListBtn && viewAnalyticsBtn && viewGoalsBtn && timelineContainer && listContainer && analyticsContainer && goalsContainer && listSortControls) {
+  if (viewTimelineBtn && timelineContainer) {
     viewTimelineBtn.classList.remove('active');
     viewListBtn.classList.remove('active');
     viewAnalyticsBtn.classList.remove('active');
     viewGoalsBtn.classList.remove('active');
+    if (viewGoalsAnalyticsBtn) viewGoalsAnalyticsBtn.classList.remove('active');
+    if (viewJobsBtn) viewJobsBtn.classList.remove('active');
+
     timelineContainer.classList.add('hide');
     timelineContainer.classList.remove('active');
     listContainer.classList.add('hide');
@@ -137,6 +148,15 @@ function applyLoadedSettings(parsed) {
     analyticsContainer.classList.remove('active');
     goalsContainer.classList.add('hide');
     goalsContainer.classList.remove('active');
+    if (goalsAnalyticsContainer) {
+      goalsAnalyticsContainer.classList.add('hide');
+      goalsAnalyticsContainer.classList.remove('active');
+    }
+    if (jobsContainer) {
+      jobsContainer.classList.add('hide');
+      jobsContainer.classList.remove('active');
+    }
+    
     listSortControls.classList.add('hide');
 
     if (state.activeView === 'timeline') {
@@ -156,6 +176,15 @@ function applyLoadedSettings(parsed) {
       viewGoalsBtn.classList.add('active');
       goalsContainer.classList.remove('hide');
       goalsContainer.classList.add('active');
+    } else if (state.activeView === 'goals-analytics' && goalsAnalyticsContainer) {
+      viewGoalsAnalyticsBtn.classList.add('active');
+      goalsAnalyticsContainer.classList.remove('hide');
+      goalsAnalyticsContainer.classList.add('active');
+    } else if (state.activeView === 'jobs' && jobsContainer) {
+      if (viewJobsBtn) viewJobsBtn.classList.add('active');
+      jobsContainer.classList.remove('hide');
+      jobsContainer.classList.add('active');
+      renderJobsView();
     }
   }
 
@@ -1228,6 +1257,15 @@ function initEventListeners() {
     
     listSortControls.classList.add('hide');
 
+    const viewJobsBtn = document.getElementById('view-jobs-btn');
+    const jobsContainer = document.getElementById('jobs-view-container');
+    
+    if (viewJobsBtn) viewJobsBtn.classList.remove('active');
+    if (jobsContainer) {
+      jobsContainer.classList.add('hide');
+      jobsContainer.classList.remove('active');
+    }
+
     if (viewName === 'timeline') {
       viewTimelineBtn.classList.add('active');
       timelineContainer.classList.add('active');
@@ -1251,8 +1289,15 @@ function initEventListeners() {
         goalsAnalyticsContainer.classList.add('active');
         goalsAnalyticsContainer.classList.remove('hide');
       }
+    } else if (viewName === 'jobs') {
+      if (viewJobsBtn) viewJobsBtn.classList.add('active');
+      if (jobsContainer) {
+        jobsContainer.classList.add('active');
+        jobsContainer.classList.remove('hide');
+      }
     }
     renderUI();
+    if (viewName === 'jobs') renderJobsView();
   };
 
   viewTimelineBtn.addEventListener('click', () => setView('timeline'));
@@ -1260,6 +1305,90 @@ function initEventListeners() {
   viewAnalyticsBtn.addEventListener('click', () => setView('analytics'));
   viewGoalsBtn.addEventListener('click', () => setView('goals'));
   if (viewGoalsAnalyticsBtn) viewGoalsAnalyticsBtn.addEventListener('click', () => setView('goals-analytics'));
+  const viewJobsBtn = document.getElementById('view-jobs-btn');
+  if (viewJobsBtn) viewJobsBtn.addEventListener('click', () => setView('jobs'));
+
+  const jobForm = document.getElementById('form-add-job');
+  const jobIsImportantCheckbox = document.getElementById('job-is-important');
+  const jobImportantNotes = document.getElementById('job-important-notes');
+  const jobReminderFilter = document.getElementById('job-reminder-filter');
+
+  if (jobIsImportantCheckbox && jobImportantNotes) {
+    jobIsImportantCheckbox.addEventListener('change', (e) => {
+      if (e.target.checked) {
+        jobImportantNotes.classList.remove('hide');
+      } else {
+        jobImportantNotes.classList.add('hide');
+      }
+    });
+  }
+
+  if (jobReminderFilter) {
+    jobReminderFilter.addEventListener('change', () => {
+      renderJobsView(); // Re-render to apply filter
+    });
+  }
+
+  if (jobForm) {
+    jobForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const jobTitle = document.getElementById('job-title').value.trim();
+      const jobDate = document.getElementById('job-date').value;
+      const skillsNeeded = document.getElementById('job-skills-needed').value.trim();
+      const skillsIHave = document.getElementById('job-skills-have').value.trim();
+      const description = document.getElementById('job-description').value.trim();
+      
+      const isImportant = jobIsImportantCheckbox ? jobIsImportantCheckbox.checked : false;
+      const importantNotes = jobImportantNotes ? jobImportantNotes.value.trim() : '';
+
+      const newJob = {
+        id: 'job_' + Date.now(),
+        jobTitle,
+        dateApplied: jobDate,
+        skillsNeeded,
+        skillsIHave,
+        description,
+        isImportant,
+        importantNotes
+      };
+
+      state.jobs.push(newJob);
+      saveJobsToLocal();
+      await dbManager.addJob(newJob);
+
+      jobForm.reset();
+      if (jobImportantNotes) {
+        jobImportantNotes.classList.add('hide');
+      }
+      renderJobsView();
+      showToast('Job application added!', 'success');
+    });
+  }
+
+  const coldMailForm = document.getElementById('form-add-cold-mail');
+  if (coldMailForm) {
+    coldMailForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const companyName = document.getElementById('cm-company').value.trim();
+      const email = document.getElementById('cm-email').value.trim();
+      const description = document.getElementById('cm-description').value.trim();
+
+      const newColdMail = {
+        id: 'cm_' + Date.now(),
+        companyName,
+        email,
+        description
+      };
+
+      state.coldMails.push(newColdMail);
+      localStorage.setItem('dayflow_cold_mails', JSON.stringify(state.coldMails));
+      await dbManager.addColdMail(newColdMail);
+
+      coldMailForm.reset();
+      renderJobsView();
+      showToast('Cold mail target added!', 'success');
+    });
+  }
 
   // Scope Tabs for Analytics (Day/Month/Year)
   document.querySelectorAll('.analytics-scope-tab').forEach(tab => {
@@ -2063,6 +2192,228 @@ function renderGoalsAnalytics() {
 }
 
 // ==========================================
+// 13.5. Jobs Tracker
+// ==========================================
+let skillsChartInstance = null;
+
+function saveJobsToLocal() {
+  localStorage.setItem('dayflow_jobs', JSON.stringify(state.jobs));
+}
+
+function renderJobsView() {
+  const container = document.getElementById('jobs-view-container');
+  if (!container || !container.classList.contains('active')) return;
+
+  const totalCountEl = document.getElementById('jobs-total-count');
+  const weekCountEl = document.getElementById('jobs-this-week-count');
+  const monthCountEl = document.getElementById('jobs-this-month-count');
+  const jobsListEl = document.getElementById('jobs-list');
+
+  const jobs = state.jobs || [];
+  
+  // Prefill 'Skills I Have' with the most recently entered value
+  const skillsHaveInput = document.getElementById('job-skills-have');
+  if (skillsHaveInput && jobs.length > 0 && !skillsHaveInput.value) {
+    // get the latest job application by time added (or just last in array since we push)
+    skillsHaveInput.value = jobs[jobs.length - 1].skillsIHave;
+  }
+  
+  // Calculate stats
+  const now = new Date();
+  let weekCount = 0;
+  let monthCount = 0;
+  
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
+  
+  // A rough check for "this week" (within last 7 days)
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(now.getDate() - 7);
+  
+  jobs.forEach(job => {
+    const d = new Date(job.dateApplied);
+    if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
+      monthCount++;
+    }
+    if (d >= sevenDaysAgo && d <= now) {
+      weekCount++;
+    }
+  });
+  
+  if (totalCountEl) totalCountEl.textContent = jobs.length;
+  if (weekCountEl) weekCountEl.textContent = weekCount;
+  if (monthCountEl) monthCountEl.textContent = monthCount;
+  
+  // Render list
+  if (jobsListEl) {
+    jobsListEl.innerHTML = '';
+    
+    // Check filter
+    const reminderFilterEl = document.getElementById('job-reminder-filter');
+    const filterRemindersOnly = reminderFilterEl ? reminderFilterEl.checked : false;
+
+    // Filter and Sort descending by date
+    let filteredJobs = [...jobs];
+    if (filterRemindersOnly) {
+      filteredJobs = filteredJobs.filter(j => j.isImportant);
+    }
+    const sortedJobs = filteredJobs.sort((a, b) => new Date(b.dateApplied) - new Date(a.dateApplied));
+    
+    if (sortedJobs.length === 0) {
+      jobsListEl.innerHTML = '<span style="color:var(--text-muted);font-size:14px;">No jobs found.</span>';
+    } else {
+      sortedJobs.forEach(job => {
+        const card = document.createElement('div');
+        card.className = 'job-card';
+        card.style.cssText = 'background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); position: relative;';
+        
+        let importantHtml = '';
+        if (job.isImportant) {
+          importantHtml = `<div style="margin-top: 8px; padding: 8px; background: rgba(255, 170, 0, 0.1); border-left: 3px solid var(--primary-light); border-radius: 4px;">
+                             <div style="font-size: 12px; color: var(--primary-light); font-weight: bold; margin-bottom: 2px;">★ Reminder / Important</div>
+                             <div style="font-size: 13px; color: var(--text-main);">${escapeHTML(job.importantNotes || '')}</div>
+                           </div>`;
+        }
+
+        card.innerHTML = `
+          <h4 style="margin:0 0 4px 0; color:var(--text-main); font-size: 16px;">${escapeHTML(job.jobTitle)}</h4>
+          <div style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">Applied on: ${escapeHTML(job.dateApplied)}</div>
+          <div style="font-size:13px; color:var(--text-main); margin-bottom:4px;"><strong>Needed:</strong> ${escapeHTML(job.skillsNeeded)}</div>
+          <div style="font-size:13px; color:var(--text-main); margin-bottom:8px;"><strong>I have:</strong> ${escapeHTML(job.skillsIHave)}</div>
+          ${job.description ? `<p style="font-size:13px; color:var(--text-muted); margin:0;">${escapeHTML(job.description)}</p>` : ''}
+          ${importantHtml}
+          <button class="delete-job-btn" data-id="${job.id}" style="position:absolute; top:12px; right:12px; background:transparent; border:none; color:var(--danger-color); cursor:pointer;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        `;
+        jobsListEl.appendChild(card);
+      });
+      
+      jobsListEl.querySelectorAll('.delete-job-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const id = e.currentTarget.getAttribute('data-id');
+          state.jobs = state.jobs.filter(j => j.id !== id);
+          saveJobsToLocal();
+          await dbManager.deleteJob(id);
+          renderJobsView();
+          showToast('Job deleted', 'success');
+        });
+      });
+    }
+  }
+
+  // Render Chart
+  renderSkillsChart(jobs);
+  
+  // Render Cold Mails
+  const coldMailsListEl = document.getElementById('cold-mails-list');
+  if (coldMailsListEl) {
+    const coldMails = state.coldMails || [];
+    coldMailsListEl.innerHTML = '';
+    
+    if (coldMails.length === 0) {
+      coldMailsListEl.innerHTML = '<span style="color:var(--text-muted);font-size:14px;">No cold mail targets added yet.</span>';
+    } else {
+      coldMails.forEach(cm => {
+        const card = document.createElement('div');
+        card.className = 'cold-mail-card';
+        card.style.cssText = 'background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); position: relative;';
+        card.innerHTML = `
+          <h4 style="margin:0 0 4px 0; color:var(--text-main); font-size: 15px;">${escapeHTML(cm.companyName)}</h4>
+          <div style="font-size:13px; color:var(--text-muted); margin-bottom:8px;">
+            <a href="mailto:${escapeHTML(cm.email)}" style="color:var(--primary-light); text-decoration:none;">${escapeHTML(cm.email)}</a>
+          </div>
+          ${cm.description ? `<p style="font-size:13px; color:var(--text-main); margin:0;">${escapeHTML(cm.description)}</p>` : ''}
+          <button class="delete-cm-btn" data-id="${cm.id}" style="position:absolute; top:12px; right:12px; background:transparent; border:none; color:var(--danger-color); cursor:pointer;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        `;
+        coldMailsListEl.appendChild(card);
+      });
+      
+      coldMailsListEl.querySelectorAll('.delete-cm-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const id = e.currentTarget.getAttribute('data-id');
+          state.coldMails = state.coldMails.filter(c => c.id !== id);
+          localStorage.setItem('dayflow_cold_mails', JSON.stringify(state.coldMails));
+          await dbManager.deleteColdMail(id);
+          renderJobsView();
+          showToast('Cold mail target deleted', 'success');
+        });
+      });
+    }
+  }
+}
+
+function renderSkillsChart(jobs) {
+  const ctx = document.getElementById('skillsChart');
+  if (!ctx || typeof Chart === 'undefined') return;
+  
+  if (skillsChartInstance) {
+    skillsChartInstance.destroy();
+  }
+  
+  const skillsCount = {};
+  jobs.forEach(job => {
+    if (job.skillsNeeded) {
+      const skills = job.skillsNeeded.split(',').map(s => s.trim()).filter(s => s);
+      skills.forEach(s => {
+        // Group by lower case, but store Title Case version for display if first time
+        const lower = s.toLowerCase();
+        const display = s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+        
+        // Find if we already have this key (case-insensitive match)
+        const existingKey = Object.keys(skillsCount).find(k => k.toLowerCase() === lower);
+        
+        if (existingKey) {
+          skillsCount[existingKey]++;
+        } else {
+          skillsCount[display] = 1;
+        }
+      });
+    }
+  });
+  
+  const labels = Object.keys(skillsCount).sort((a, b) => skillsCount[b] - skillsCount[a]).slice(0, 10);
+  const data = labels.map(l => skillsCount[l]);
+  
+  skillsChartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Top 10 Skills Needed in Applications',
+        data: data,
+        backgroundColor: 'rgba(59, 130, 246, 0.7)',
+        borderColor: 'rgba(59, 130, 246, 1)',
+        borderWidth: 1,
+        borderRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { stepSize: 1, color: '#aaa' },
+          grid: { color: 'rgba(255,255,255,0.1)' }
+        },
+        x: {
+          ticks: { color: '#aaa' },
+          grid: { display: false }
+        }
+      },
+      plugins: {
+        legend: {
+          labels: { color: '#fff' }
+        }
+      }
+    }
+  });
+}
+
+// ==========================================
 // 14. App Bootstrap
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
@@ -2128,20 +2479,44 @@ document.addEventListener('DOMContentLoaded', () => {
           injectMockTasks();
           dbManager.importTasks(state.tasks).then(() => {
             localStorage.setItem('dayflow_tasks', JSON.stringify(state.tasks));
-            renderUI();
+            dbManager.getJobs().then(jobs => {
+              state.jobs = jobs || [];
+              dbManager.getColdMails().then(coldMails => {
+                state.coldMails = coldMails || [];
+                renderUI();
+                if (state.activeView === 'jobs') renderJobsView();
+              });
+            });
           });
         } else {
           localStorage.setItem('dayflow_tasks', JSON.stringify(state.tasks));
-          renderUI();
+          dbManager.getJobs().then(jobs => {
+            state.jobs = jobs || [];
+            dbManager.getColdMails().then(coldMails => {
+              state.coldMails = coldMails || [];
+              renderUI();
+              if (state.activeView === 'jobs') renderJobsView();
+            });
+          });
         }
       }).catch(err => {
         console.error("Failed to load settings or tasks from DB, using fallback", err);
         loadFallbackTasks();
+        const loadedJobs = localStorage.getItem('dayflow_jobs');
+        state.jobs = loadedJobs ? JSON.parse(loadedJobs) : [];
+        const loadedColdMails = localStorage.getItem('dayflow_cold_mails');
+        state.coldMails = loadedColdMails ? JSON.parse(loadedColdMails) : [];
         renderUI();
+        if (state.activeView === 'jobs') renderJobsView();
       });
     } else {
       loadFallbackTasks();
+      const loadedJobs = localStorage.getItem('dayflow_jobs');
+      state.jobs = loadedJobs ? JSON.parse(loadedJobs) : [];
+      const loadedColdMails = localStorage.getItem('dayflow_cold_mails');
+      state.coldMails = loadedColdMails ? JSON.parse(loadedColdMails) : [];
       renderUI();
+      if (state.activeView === 'jobs') renderJobsView();
     }
   });
 });
