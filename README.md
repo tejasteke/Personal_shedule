@@ -42,5 +42,5 @@ A dedicated dashboard just for your goals:
 2. Open `index.html` in your favorite modern web browser.
 3. Start planning your day and conquering your goals!
 
-## Theme Support 🌗
+## Theme Support 
 DayFlow includes a built-in toggle to seamlessly switch between a sleek **Light Mode** and a stunning **Dark Mode** to suit your preference and environment.
